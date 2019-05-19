@@ -11,39 +11,70 @@ var start_center_y = 20;
 const diameterFactor = 0.5;
 var hexagons = []
 
+var img = new Image();
+img.src = './img/goal.png';
+img.onload = drawField;
 
-for (var i = 0; i < WIDTH; i++) {
-	for(var j = 0; j < LENGTH; j++){
-		var result = Math.pow(i - WIDTH / 2.0, 2) / Math.pow(diameterFactor * WIDTH, 2);
-        result += Math.pow(j - LENGTH / 2.0, 2) / Math.pow(diameterFactor * LENGTH, 2);
-        if(result <=1.0){
-        	var center_x = start_center_x;
-        	var center_y = start_center_y;
-			var hexagon = new Hexagon(center_x ,center_y);
-			hexagon.setCorners();
-			ctx.beginPath();
-			hexagon.corners.forEach( function(element, index) {
-				// statements
-				if(index === 0){
-					ctx.moveTo(element.x, element.y);
+
+var drawn = false;
+function drawField(){
+	var goalPositions = [];
+	for (var i = 0; i < WIDTH; i++) {
+		for(var j = 0; j < LENGTH; j++){
+			var result = Math.pow(i - WIDTH / 2.0, 2) / Math.pow(diameterFactor * WIDTH, 2);
+	        result += Math.pow(j - LENGTH / 2.0, 2) / Math.pow(diameterFactor * LENGTH, 2);
+	        if(result <=1.0){
+	        	var center_x = start_center_x;
+	        	var center_y = start_center_y;
+				var hexagon = new Hexagon(center_x ,center_y);
+				hexagon.setCorners();
+				ctx.beginPath();
+				hexagon.corners.forEach( function(element, index) {
+					// statements
+					if(index === 0){
+						ctx.moveTo(element.x, element.y);
+					} else{
+						ctx.lineTo(element.x, element.y);
+					}
+				});
+				if(j < LENGTH/ 5 || j > 4 * LENGTH/5){
+					ctx.fillStyle = "#decc21"
 				} else{
-					ctx.lineTo(element.x, element.y);
+					ctx.fillStyle = "#0bb526"
 				}
-			});
-			if(j < LENGTH/ 5 || j > 4 * LENGTH/5){
-				ctx.fillStyle = "#decc21"
-			} else{
-				ctx.fillStyle = "#0bb526"
-			}
+				if(shouldDrawGoal(i,j)){
+					let position = {
+						x: center_x, 
+						y: center_y
+					}
+					goalPositions.push(position);
+				}
 
-			ctx.closePath();
-			ctx.fill();
-			hexagons.push(hexagon);
-        }
-        start_center_x += radius*2;
+				ctx.closePath();
+				ctx.fill(); 
+				hexagons.push(hexagon);
+	        }
+	        start_center_x += radius*2;
+		}
+		start_center_x = i%2===0? 20:10;
+		start_center_y +=20;
 	}
-	start_center_x = i%2===0? 20:10;
-	start_center_y +=20;
+	drawGoals(goalPositions);
+}
+
+function drawGoals(goalPositions){
+	goalPositions.forEach(function(position){
+		ctx.drawImage(img, position.x , position.y )
+	});
+}
+
+function shouldDrawGoal(i, j){
+	return  (j == Math.floor(LENGTH/ 5) - 1 && i == Math.floor(3*WIDTH/8)) ||
+			(j == Math.floor(LENGTH/ 5) - 2 && i == Math.floor(4*WIDTH/8)) ||
+			(j == Math.floor(LENGTH/ 5) - 1 && i == Math.floor(5*WIDTH/8)) ||
+			(j == Math.floor(4 * LENGTH/ 5) && i == Math.floor(3*WIDTH/8)) ||
+			(j == Math.floor(4 * LENGTH/ 5) +1 && i == Math.floor(4*WIDTH/8)) ||
+			(j == Math.floor(4 * LENGTH/ 5) && i == Math.floor(5*WIDTH/8))
 }
 
 function setCorners(){
@@ -68,6 +99,7 @@ function Hexagon(x, y){
 	this.setCorners = setCorners;
 }
 /*
+	Returns the closest hexagon to the clocked point
 */
 function getClosestHexagon(hexagons, x, y){
 	var minDistance = WIDTH * LENGTH;
@@ -93,6 +125,7 @@ function getClosestHexagon(hexagons, x, y){
 	}
 
 }
+
 
 canvas.addEventListener('click', function(event) {
 	var closestValues = getClosestHexagon(hexagons, event.x - elemLeft, event.y - elemTop);
